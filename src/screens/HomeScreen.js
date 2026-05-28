@@ -23,7 +23,7 @@ export function HomeScreen({ onNavigate, dashboard }) {
       <View style={styles.topRow}>
         <View style={styles.brandRow}>
           <View style={styles.logoFrame}>
-            <Image source={require("../../assets/images/logo.jfif")} style={styles.logo} />
+            <Image source={require("../../assets/images/logo.jpg")} style={styles.logo} />
           </View>
           <View>
             <Text style={styles.eyebrow}>MediCare +</Text>

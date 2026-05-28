@@ -59,7 +59,7 @@ export default function App() {
         >
           <View style={styles.splashOverlay}>
             <View style={styles.logoFrame}>
-              <Image source={require("./assets/images/logo.jfif")} style={styles.logo} />
+              <Image source={require("./assets/images/logo.jpg")} style={styles.logo} />
             </View>
             <Text style={styles.brand}>MediCare +</Text>
             <Text style={styles.splashText}>Votre super-app sante, consultation, pharmacie et SOS.</Text>

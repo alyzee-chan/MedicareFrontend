@@ -4,7 +4,7 @@
     "slug": "medicare-plus",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/logo.jfif",
+    "icon": "./assets/images/logo.jpg",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/images/LoadingPage.png",
@@ -19,12 +19,12 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/logo.jfif",
+        "foregroundImage": "./assets/images/logo.jpg",
         "backgroundColor": "#F9E6C3"
       }
     },
     "web": {
-      "favicon": "./assets/images/logo.jfif"
+      "favicon": "./assets/images/logo.jpg"
     }
   }
 }

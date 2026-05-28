@@ -12,7 +12,7 @@ export function ProfileScreen({ dashboard }) {
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View style={styles.avatar}>
-          <Image source={require("../../assets/images/logo.jfif")} style={styles.avatarImage} />
+          <Image source={require("../../assets/images/logo.jpg")} style={styles.avatarImage} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.kicker}>Profil famille</Text>
