@@ -1,238 +1,136 @@
 import React from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { colors, shadows } from "../theme";
 
-import { colors } from "../theme";
-import { profiles } from "../data/demo";
+const PremiumBackground = () => (
+  <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F8FBFF" }]} />
+    <View style={[styles.blob, { top: -50, right: -50, width: 250, height: 250, backgroundColor: "#E3EEFF", opacity: 0.6 }]} />
+    <View style={[styles.blob, { bottom: 100, left: -80, width: 300, height: 300, backgroundColor: "#EAFFF4", opacity: 0.4 }]} />
+  </View>
+);
 
-export function ProfileScreen({ dashboard }) {
-  const profileList = dashboard?.profiles?.length ? dashboard.profiles : profiles;
-  const medicalRecord = dashboard?.medicalRecord;
+export function ProfileScreen() {
+  const profileItems = [
+    { id: "health", title: "Dossier Médical", icon: "clipboard-outline", color: colors.primary },
+    { id: "insurance", title: "Assurance Santé", icon: "shield-checkmark-outline", color: colors.accent },
+    { id: "biometrics", title: "Biométrie & Sommeil", icon: "pulse", color: colors.danger },
+    { id: "payment", title: "Paiements & Factures", icon: "card-outline", color: colors.warning },
+    { id: "settings", title: "Paramètres", icon: "settings-outline", color: colors.muted },
+  ];
 
   return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Image source={require("../../assets/images/logo.jpg")} style={styles.avatarImage} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.kicker}>Profil famille</Text>
-          <Text style={styles.title}>Sophie, dossier medical centralise et multi-profils.</Text>
-          <Text style={styles.subtitle}>Allergies, vaccins, traitements en cours, partage securise et export PDF.</Text>
-        </View>
-      </View>
+    <View style={{ flex: 1 }}>
+      <PremiumBackground />
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <Text style={styles.kicker}>MON PROFIL</Text>
 
-      <Text style={styles.sectionTitle}>Profils disponibles</Text>
-      <View style={styles.profileGrid}>
-        {profileList.map((profile) => (
-          <View key={profile.id} style={[styles.profileCard, { borderColor: profile.tone }]}>
-            <View style={[styles.profileDot, { backgroundColor: profile.tone }]} />
-            <Text style={styles.profileName}>{profile.name}</Text>
-            <Text style={styles.profileRole}>{profile.role}</Text>
+        {/* Profile Card */}
+        <View style={styles.card}>
+          <View style={styles.avatarRow}>
+            <View style={styles.avatarWrap}>
+              <Image
+                source={{ uri: "https://ui-avatars.com/api/?name=Alyzee+User&background=3478F6&color=fff&size=128" }}
+                style={styles.avatarImg}
+              />
+              <View style={styles.editBadge}>
+                <Ionicons name="camera" size={12} color="#FFF" />
+              </View>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName}>Alyzee User</Text>
+              <Text style={styles.userMeta}>Groupe O+ · 24 ans</Text>
+              <View style={styles.tag}>
+                <Text style={styles.tagText}>Membre Premium</Text>
+              </View>
+            </View>
           </View>
-        ))}
-      </View>
+        </View>
 
-      <Text style={styles.sectionTitle}>Dossier de sante</Text>
-      <View style={styles.recordCard}>
-        <RecordItem label="Allergies" value={medicalRecord ? medicalRecord.allergies.join(", ") : "Penicilline, arachides"} />
-        <RecordItem label="Traitements" value={medicalRecord ? medicalRecord.treatments.join(", ") : "Vitamine D, antihistaminique"} />
-        <RecordItem label="Vaccins" value={medicalRecord ? medicalRecord.vaccines.join(", ") : "Calendrier a jour"} />
-        <RecordItem label="Notes" value={medicalRecord ? medicalRecord.notes.join(", ") : "Acces temporaire actif"} />
-      </View>
+        {/* Family Section */}
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>Ma Famille</Text>
+          <Text style={styles.sectionLink}>Ajouter</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
+          {["Maman", "Papa", "Soeur"].map((role, i) => (
+            <View key={i} style={styles.familyCard}>
+              <View style={styles.familyAvatar}>
+                <Ionicons name="person" size={18} color={colors.primary} />
+              </View>
+              <Text style={styles.familyName}>{role}</Text>
+            </View>
+          ))}
+        </ScrollView>
 
-      <Text style={styles.sectionTitle}>Options rapides</Text>
-      <View style={styles.quickRow}>
-        <QuickAction label="Exporter PDF" />
-        <QuickAction label="Biometrie" />
-        <QuickAction label="Paiements" />
-      </View>
+        {/* Menu Items */}
+        <View style={styles.menuBox}>
+          {profileItems.map((item, i) => (
+            <Pressable key={item.id} style={[styles.menuItem, i === profileItems.length - 1 && { borderBottomWidth: 0 }]}>
+              <View style={[styles.menuIcon, { backgroundColor: `${item.color}15` }]}>
+                <Ionicons name={item.icon} size={20} color={item.color} />
+              </View>
+              <Text style={styles.menuText}>{item.title}</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.muted} />
+            </Pressable>
+          ))}
+        </View>
 
-      <View style={styles.familyCard}>
-        <Text style={styles.familyTitle}>Pack Premium Famille</Text>
-        <Text style={styles.familyText}>
-          Un seul compte pour les rendez-vous, l'aide d'urgence, les suivis enfants et les rappels medicaux.
-        </Text>
-        <Pressable style={styles.familyButton}>
-          <Text style={styles.familyButtonText}>Activer le pack</Text>
-        </Pressable>
-      </View>
-    </ScrollView>
-  );
-}
-
-function RecordItem({ label, value }) {
-  return (
-    <View style={styles.recordItem}>
-      <Text style={styles.recordLabel}>{label}</Text>
-      <Text style={styles.recordValue}>{value}</Text>
-    </View>
-  );
-}
-
-function QuickAction({ label }) {
-  return (
-    <View style={styles.quickAction}>
-      <Text style={styles.quickActionText}>{label}</Text>
+        {/* Premium Banner */}
+        <View style={styles.premiumCard}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.premiumTitle}>Passez à l'offre Family</Text>
+            <Text style={styles.premiumSub}>Accès illimité pour 5 profils</Text>
+          </View>
+          <Pressable style={styles.premiumBtn}>
+            <Text style={styles.premiumBtnText}>Découvrir</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 120,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 28,
-    padding: 16,
-  },
-  avatar: {
-    width: 82,
-    height: 82,
-    borderRadius: 26,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarImage: {
-    width: 62,
-    height: 62,
-    borderRadius: 20,
-  },
-  kicker: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  title: {
-    color: colors.text,
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: "800",
-    marginTop: 6,
-  },
-  subtitle: {
-    color: colors.muted,
-    marginTop: 8,
-    lineHeight: 20,
-    fontSize: 13,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 18,
-    marginBottom: 12,
-  },
-  profileGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  profileCard: {
-    width: "48%",
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    padding: 14,
-  },
-  profileDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginBottom: 12,
-  },
-  profileName: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  profileRole: {
-    color: colors.muted,
-    marginTop: 4,
-    fontSize: 12,
-  },
-  recordCard: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 24,
-    padding: 16,
-  },
-  recordItem: {
-    paddingVertical: 11,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
-  },
-  recordLabel: {
-    color: colors.muted,
-    fontSize: 12,
-    fontWeight: "700",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  recordValue: {
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: "700",
-    marginTop: 4,
-  },
-  quickRow: {
-    flexDirection: "row",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  quickAction: {
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.primarySoft,
-  },
-  quickActionText: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 12,
-  },
-  familyCard: {
-    marginTop: 18,
-    backgroundColor: "#EEF8FF",
-    borderRadius: 26,
-    borderWidth: 1,
-    borderColor: "#D2E4FF",
-    padding: 18,
-  },
-  familyTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  familyText: {
-    color: colors.muted,
-    lineHeight: 21,
-    marginTop: 8,
-    fontSize: 13,
-  },
-  familyButton: {
-    marginTop: 14,
-    alignSelf: "flex-start",
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  familyButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-  },
+  container: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 20 },
+  blob: { position: "absolute", borderRadius: 150 },
+
+  kicker: { color: colors.primary, fontWeight: "800", fontSize: 12, letterSpacing: 1.5, marginBottom: 12 },
+
+  card: { backgroundColor: "#FFF", borderRadius: 28, padding: 20, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", marginBottom: 24, ...shadows.soft },
+  avatarRow: { flexDirection: "row", alignItems: "center", gap: 18 },
+  avatarWrap: { position: "relative" },
+  avatarImg: { width: 72, height: 72, borderRadius: 24 },
+  editBadge: { position: "absolute", bottom: -4, right: -4, width: 24, height: 24, borderRadius: 12, backgroundColor: colors.accent, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#FFF" },
+  userName: { fontSize: 20, fontWeight: "800", color: colors.text },
+  userMeta: { fontSize: 13, color: colors.muted, marginTop: 2 },
+  tag: { backgroundColor: "#1A2138", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: "flex-start", marginTop: 8 },
+  tagText: { color: "#FFF", fontSize: 10, fontWeight: "800", textTransform: "uppercase" },
+
+  sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
+  sectionTitle: { fontSize: 17, fontWeight: "800", color: colors.text },
+  sectionLink: { fontSize: 13, fontWeight: "700", color: colors.primary },
+
+  familyCard: { width: 90, backgroundColor: "#FFF", borderRadius: 20, padding: 14, alignItems: "center", ...shadows.soft, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)" },
+  familyAvatar: { width: 36, height: 36, borderRadius: 12, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  familyName: { fontSize: 12, fontWeight: "700", color: colors.text },
+
+  menuBox: { backgroundColor: "#FFF", borderRadius: 24, paddingVertical: 8, marginTop: 12, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", ...shadows.soft },
+  menuItem: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, borderBottomWidth: 1, borderBottomColor: "#F1F5F9" },
+  menuIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  menuText: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
+
+  premiumCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.primary, borderRadius: 24, padding: 22, marginTop: 24, gap: 14, ...shadows.card },
+  premiumTitle: { color: "#FFF", fontSize: 16, fontWeight: "800" },
+  premiumSub: { color: "rgba(255,255,255,0.8)", fontSize: 12, marginTop: 2 },
+  premiumBtn: { backgroundColor: "#FFF", paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  premiumBtnText: { color: colors.primary, fontWeight: "800", fontSize: 13 },
 });

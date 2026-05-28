@@ -1,264 +1,147 @@
 import React from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { colors, shadows } from "../theme";
 
-import { colors } from "../theme";
-import { upcomingAppointments } from "../data/demo";
+const PremiumBackground = () => (
+  <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F8FBFF" }]} />
+    <View style={[styles.blob, { top: -50, right: -50, width: 250, height: 250, backgroundColor: "#E3EEFF", opacity: 0.6 }]} />
+    <View style={[styles.blob, { bottom: 100, left: -80, width: 300, height: 300, backgroundColor: "#EAFFF4", opacity: 0.4 }]} />
+  </View>
+);
 
-function Tag({ label, active }) {
+export function AppointmentsScreen({ dashboard, loading, onNavigate }) {
+  const appointments = dashboard?.appointments || [];
+
+  const handleAction = (type, item) => {
+    Alert.alert(
+      type === "cancel" ? "Annuler" : "Reprogrammer",
+      `Voulez-vous ${type === "cancel" ? "annuler" : "reprogrammer"} le RDV avec ${item.doctorName}?`,
+      [
+        { text: "Non", style: "cancel" },
+        { text: "Oui", onPress: () => Alert.alert("Succès", "Demande envoyée au secrétariat.") },
+      ]
+    );
+  };
+
   return (
-    <View style={[styles.tag, active && styles.tagActive]}>
-      <Text style={[styles.tagText, active && styles.tagTextActive]}>{label}</Text>
+    <View style={{ flex: 1 }}>
+      <PremiumBackground />
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerRow}>
+          <View>
+            <Text style={styles.kicker}>RDV & ORDONNANCES</Text>
+            <Text style={styles.title}>Gérez vos soins.</Text>
+          </View>
+          <Pressable style={styles.addBtn} onPress={() => onNavigate("home")}>
+            <Ionicons name="add" size={24} color="#FFF" />
+          </Pressable>
+        </View>
+
+        <View style={styles.uploadCard}>
+          <View style={styles.uploadIcon}>
+            <Ionicons name="cloud-upload" size={28} color={colors.primary} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.uploadTitle}>Ajouter une ordonnance</Text>
+            <Text style={styles.uploadSub}>Scannez ou importez un PDF</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+        </View>
+
+        <Text style={styles.sectionTitle}>Mes prochains rendez-vous</Text>
+
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 20 }} />
+        ) : appointments.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Ionicons name="calendar-outline" size={32} color={colors.muted} />
+            <Text style={styles.emptyText}>Aucun rendez-vous prévu.</Text>
+          </View>
+        ) : (
+          appointments.map((item) => (
+            <View key={item.id} style={styles.appointCard}>
+              <View style={styles.cardHeader}>
+                <View style={styles.docAvatar}>
+                  <Ionicons name="person" size={22} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.docName}>{item.doctorName}</Text>
+                  <Text style={styles.docSpec}>{item.specialty || "Médecin généraliste"}</Text>
+                </View>
+                <View style={[styles.statusPill, { backgroundColor: item.status === "Confirmé" ? "#E0F8EC" : "#FFF4E0" }]}>
+                  <Text style={[styles.statusText, { color: item.status === "Confirmé" ? colors.success : colors.warning }]}>{item.status}</Text>
+                </View>
+              </View>
+
+              <View style={styles.cardInfo}>
+                <View style={styles.infoRow}>
+                  <Ionicons name="calendar" size={14} color={colors.muted} />
+                  <Text style={styles.infoText}>{item.date}</Text>
+                </View>
+                <View style={styles.infoRow}>
+                  <Ionicons name="time" size={14} color={colors.muted} />
+                  <Text style={styles.infoText}>{item.time}</Text>
+                </View>
+              </View>
+
+              <View style={styles.actions}>
+                <Pressable style={styles.actionBtn} onPress={() => handleAction("reschedule", item)}>
+                  <Text style={styles.actionText}>Reprogrammer</Text>
+                </Pressable>
+                <Pressable style={[styles.actionBtn, styles.actionBtnOutline]} onPress={() => handleAction("cancel", item)}>
+                  <Text style={[styles.actionText, { color: colors.danger }]}>Annuler</Text>
+                </Pressable>
+              </View>
+            </View>
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
 
-export function AppointmentsScreen({ dashboard }) {
-  const appointments = dashboard?.appointments?.length ? dashboard.appointments : upcomingAppointments;
-
-  return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.kicker}>Rendez-vous</Text>
-      <Text style={styles.title}>Planifiez, suivez et reprogrammez vos consultations.</Text>
-
-      <View style={styles.filterRow}>
-        <Tag label="Aujourd'hui" active />
-        <Tag label="Semaine" />
-        <Tag label="Teleconsultation" />
-      </View>
-
-      {appointments.map((item, index) => (
-        <View key={item.id} style={styles.card}>
-          <View style={styles.cardTop}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>0{index + 1}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{item.name || item.doctorName}</Text>
-              <Text style={styles.cardMeta}>{item.specialty || item.clinic}</Text>
-              <Text style={styles.cardMeta}>
-                {item.date} - {item.time}
-              </Text>
-            </View>
-            <Pressable style={styles.chevron}>
-              <Text style={styles.chevronText}>›</Text>
-            </Pressable>
-          </View>
-          <View style={styles.actionsRow}>
-            <Pressable style={styles.primaryAction}>
-              <Text style={styles.primaryActionText}>Reporter</Text>
-            </Pressable>
-            <Pressable style={styles.secondaryAction}>
-              <Text style={styles.secondaryActionText}>Annuler</Text>
-            </Pressable>
-          </View>
-        </View>
-      ))}
-
-      <View style={styles.panel}>
-        <Text style={styles.panelTitle}>Telemedecine securisee</Text>
-        <Text style={styles.panelText}>
-          Session video WebRTC, chat prive, partage de documents et ordonnance numerique avec QR code.
-        </Text>
-        <View style={styles.panelSteps}>
-          <Text style={styles.panelStep}>1. Ouvrir la salle d'attente</Text>
-          <Text style={styles.panelStep}>2. Partager les pieces jointes</Text>
-          <Text style={styles.panelStep}>3. Recueillir l'ordonnance PDF</Text>
-        </View>
-      </View>
-
-      <Text style={styles.sectionTitle}>Historique recent</Text>
-      <View style={styles.historyRow}>
-        <View style={styles.historyStat}>
-          <Text style={styles.historyValue}>14</Text>
-          <Text style={styles.historyLabel}>Consultations</Text>
-        </View>
-        <View style={styles.historyStat}>
-          <Text style={styles.historyValue}>08</Text>
-          <Text style={styles.historyLabel}>Ordonnances</Text>
-        </View>
-      </View>
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 120,
-  },
-  kicker: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  title: {
-    color: colors.text,
-    fontSize: 24,
-    lineHeight: 31,
-    fontWeight: "800",
-    marginTop: 8,
-  },
-  filterRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 18,
-    marginBottom: 16,
-  },
-  tag: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-  },
-  tagActive: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primarySoft,
-  },
-  tagText: {
-    color: colors.muted,
-    fontWeight: "700",
-    fontSize: 12,
-  },
-  tagTextActive: {
-    color: colors.primary,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  avatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#EEF4FF",
-  },
-  avatarText: {
-    color: colors.primary,
-    fontWeight: "800",
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  cardMeta: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  chevron: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.surfaceSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chevronText: {
-    color: colors.primary,
-    fontSize: 24,
-    lineHeight: 24,
-    fontWeight: "700",
-  },
-  actionsRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 16,
-  },
-  primaryAction: {
-    flex: 1,
-    backgroundColor: colors.primary,
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  primaryActionText: {
-    color: "#FFFFFF",
-    fontWeight: "700",
-  },
-  secondaryAction: {
-    flex: 1,
-    backgroundColor: colors.surfaceSoft,
-    borderRadius: 16,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  secondaryActionText: {
-    color: colors.primary,
-    fontWeight: "700",
-  },
-  panel: {
-    marginTop: 8,
-    backgroundColor: "#FFF7EE",
-    borderRadius: 26,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "#FFE2C0",
-  },
-  panelTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-  panelText: {
-    color: colors.muted,
-    marginTop: 8,
-    lineHeight: 21,
-    fontSize: 13,
-  },
-  panelSteps: {
-    marginTop: 14,
-    gap: 8,
-  },
-  panelStep: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 18,
-    marginBottom: 10,
-  },
-  historyRow: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  historyStat: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: 16,
-  },
-  historyValue: {
-    color: colors.text,
-    fontWeight: "800",
-    fontSize: 22,
-  },
-  historyLabel: {
-    color: colors.muted,
-    marginTop: 4,
-    fontSize: 12,
-  },
+  container: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 20 },
+  blob: { position: "absolute", borderRadius: 150 },
+
+  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 },
+  kicker: { color: colors.primary, fontWeight: "800", fontSize: 12, letterSpacing: 1.5, marginBottom: 4 },
+  title: { fontSize: 26, fontWeight: "800", color: colors.text },
+  addBtn: { width: 44, height: 44, borderRadius: 16, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", ...shadows.card },
+
+  uploadCard: { flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#FFF", padding: 18, borderRadius: 20, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", marginBottom: 24, ...shadows.soft },
+  uploadIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
+  uploadTitle: { fontSize: 16, fontWeight: "800", color: colors.text },
+  uploadSub: { fontSize: 13, color: colors.muted, marginTop: 2 },
+
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: colors.text, marginBottom: 16 },
+  emptyCard: { backgroundColor: "#FFF", borderRadius: 20, padding: 32, alignItems: "center", justifyContent: "center", ...shadows.soft },
+  emptyText: { color: colors.muted, fontSize: 14, marginTop: 12 },
+
+  appointCard: { backgroundColor: "#FFF", borderRadius: 24, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", padding: 20, marginBottom: 16, ...shadows.soft },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 16 },
+  docAvatar: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
+  docName: { fontSize: 16, fontWeight: "800", color: colors.text },
+  docSpec: { fontSize: 13, color: colors.muted, marginTop: 1 },
+  statusPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  statusText: { fontSize: 11, fontWeight: "700" },
+
+  cardInfo: { flexDirection: "row", gap: 20, borderTopWidth: 1, borderTopColor: "#F1F5F9", paddingTop: 16, marginBottom: 20 },
+  infoRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  infoText: { fontSize: 13, color: colors.textSecondary, fontWeight: "600" },
+
+  actions: { flexDirection: "row", gap: 12 },
+  actionBtn: { flex: 1, height: 44, borderRadius: 14, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
+  actionBtnOutline: { backgroundColor: "transparent", borderWidth: 1, borderColor: "#FED7D7" },
+  actionText: { fontSize: 13, fontWeight: "700", color: colors.primary },
 });

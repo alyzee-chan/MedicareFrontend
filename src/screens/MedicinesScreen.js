@@ -1,324 +1,247 @@
-import React from "react";
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { api } from "../services/api";
+import { colors, shadows } from "../theme";
 
-import { colors } from "../theme";
-import { medicines, pharmacies, searchModes } from "../data/demo";
+// Coded Background consistency
+const PremiumBackground = () => (
+  <View style={StyleSheet.absoluteFill}>
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: "#F8FBFF" }]} />
+    <View style={[styles.blob, { top: -50, right: -50, width: 250, height: 250, backgroundColor: "#E3EEFF", opacity: 0.6 }]} />
+    <View style={[styles.blob, { bottom: 100, left: -80, width: 300, height: 300, backgroundColor: "#EAFFF4", opacity: 0.4 }]} />
+    <View style={[styles.blob, { top: "40%", right: -100, width: 200, height: 200, backgroundColor: "#FFF4E8", opacity: 0.3 }]} />
+  </View>
+);
 
-function ModeCard({ label, active }) {
+export function MedicinesScreen({ dashboard, loading, onNavigate, params }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [aiResponse, setAiResponse] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const pharmacies = dashboard?.pharmacies || [];
+
+  useEffect(() => {
+    if (dashboard?.medicines) {
+      setResults(dashboard.medicines);
+    }
+  }, [dashboard]);
+
+  useEffect(() => {
+    if (params?.query) {
+      setSearchQuery(params.query);
+      triggerSearch(params.query);
+    }
+  }, [params]);
+
+  const triggerSearch = (query) => {
+    setSearching(true);
+    api
+      .searchMedicines(query)
+      .then((data) => {
+        setResults(data || []);
+        setSearching(false);
+      })
+      .catch(() => {
+        setSearching(false);
+        Alert.alert("Erreur", "Impossible de rechercher les médicaments.");
+      });
+  };
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      if (dashboard?.medicines) setResults(dashboard.medicines);
+      return;
+    }
+    triggerSearch(searchQuery);
+  };
+
+  const handleAskAI = () => {
+    if (!searchQuery.trim()) {
+      Alert.alert("Info", "Entrez vos symptômes pour obtenir un avis.");
+      return;
+    }
+    setAiLoading(true);
+    api
+      .askGroq(searchQuery)
+      .then((response) => {
+        setAiResponse(response);
+        setAiLoading(false);
+      })
+      .catch(() => {
+        setAiLoading(false);
+        Alert.alert("Erreur", "L'assistant IA n'est pas disponible.");
+      });
+  };
+
+  const handleOrder = (medicine) => {
+    Alert.alert(
+      "🛒 Commander",
+      `Ajouter ${medicine.name} (${medicine.price}) au panier ?`,
+      [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Commander",
+          onPress: () => {
+            api
+              .createOrder({ medicineId: medicine.id, quantity: 1 })
+              .then(() =>
+                Alert.alert("✅ Commandé", `${medicine.name} ajouté au panier !`)
+              )
+              .catch(() =>
+                Alert.alert("Erreur", "Impossible de passer la commande.")
+              );
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={[styles.modeCard, active && styles.modeCardActive]}>
-      <Text style={[styles.modeLabel, active && styles.modeLabelActive]}>{label}</Text>
+    <View style={{ flex: 1 }}>
+      <PremiumBackground />
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+        <Text style={styles.kicker}>MÉDICAMENTS</Text>
+        <Text style={styles.title}>Recherchez et commandez en quelques secondes.</Text>
+
+        <View style={styles.banner}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bannerTitle}>Gestion simplifiée du stock.</Text>
+            <Text style={styles.bannerSub}>Recherche par nom ou symptômes.</Text>
+          </View>
+          <Image source={require("../../assets/images/HealthCare.png")} style={styles.bannerImg} />
+        </View>
+
+        <View style={styles.searchBar}>
+          <Ionicons name="search-outline" size={20} color={colors.muted} />
+          <TextInput
+            placeholder="Nom ou symptômes..."
+            placeholderTextColor={colors.muted}
+            style={styles.searchInput}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          <Pressable onPress={handleSearch} style={styles.searchBtn}>
+            <Ionicons name="arrow-forward" size={20} color="#FFF" />
+          </Pressable>
+        </View>
+
+        <Pressable style={styles.aiBtn} onPress={handleAskAI}>
+          {aiLoading ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <>
+              <Ionicons name="sparkles" size={20} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.aiBtnText}>Demander à l'assistant IA</Text>
+            </>
+          )}
+        </Pressable>
+
+        {aiResponse && (
+          <View style={styles.aiCard}>
+            <View style={styles.aiCardHeader}>
+              <Ionicons name="sparkles" size={18} color="#8A5CFF" />
+              <Text style={styles.aiCardTitle}>Réponse de l'assistant</Text>
+            </View>
+            <Text style={styles.aiCardText}>{aiResponse}</Text>
+            <Pressable onPress={() => setAiResponse(null)} style={styles.aiDismiss}>
+              <Text style={styles.aiDismissText}>Fermer</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <Text style={styles.sectionTitle}>{searching ? "Recherche..." : "Résultats en stock"}</Text>
+
+        {searching ? (
+          <ActivityIndicator size="large" color={colors.primary} style={{ marginVertical: 20 }} />
+        ) : results.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Ionicons name="cube-outline" size={32} color={colors.muted} />
+            <Text style={styles.emptyText}>Aucun médicament trouvé.</Text>
+          </View>
+        ) : (
+          results.map((med) => (
+            <Pressable key={med.id} style={styles.medCard} onPress={() => handleOrder(med)}>
+              <View style={styles.medLeft}>
+                <View style={styles.medIconWrap}>
+                  <Ionicons name="medkit-outline" size={24} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.medName}>{med.name}</Text>
+                  <Text style={styles.medForm}>{med.form}</Text>
+                </View>
+              </View>
+              <View style={styles.medRight}>
+                <Text style={styles.medPrice}>{med.price}</Text>
+                <View style={[styles.stockBadge, { backgroundColor: med.stock === "En stock" ? "#E0F8EC" : "#FFF4E0" }]}>
+                  <Text style={[styles.stockText, { color: med.stock === "En stock" ? colors.success : colors.warning }]}>{med.stock}</Text>
+                </View>
+              </View>
+            </Pressable>
+          ))
+        )}
+
+        <Pressable style={styles.ctaBtn} onPress={() => onNavigate("appointments")}>
+          <Ionicons name="document-text-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
+          <Text style={styles.ctaBtnText}>Commander depuis une ordonnance</Text>
+        </Pressable>
+      </ScrollView>
     </View>
   );
 }
 
-export function MedicinesScreen({ onNavigate, dashboard }) {
-  const medicineList = dashboard?.medicines?.length ? dashboard.medicines : medicines;
-  const pharmacyList = dashboard?.pharmacies?.length ? dashboard.pharmacies : pharmacies;
-
-  return (
-    <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={styles.kicker}>Medicaments</Text>
-      <Text style={styles.title}>Recherchez, comparez et commandez en quelques secondes.</Text>
-
-      <View style={styles.hero}>
-        <View style={styles.heroText}>
-          <Text style={styles.heroHeadline}>Ordonnance, stock et alternatives au meme endroit.</Text>
-          <Text style={styles.heroCopy}>
-            La recherche fonctionne par nom, symptomes, photo ou description. Les resultats restent lisibles et rapides.
-          </Text>
-        </View>
-        <Image source={require("../../assets/images/HealthCare.png")} style={styles.heroImage} />
-      </View>
-
-      <View style={styles.searchBar}>
-        <Text style={styles.searchIcon}>⌕</Text>
-        <TextInput placeholder="Nom commercial, symptomes ou description" placeholderTextColor="#97A4B9" style={styles.searchInput} />
-      </View>
-
-      <View style={styles.modeGrid}>
-        {searchModes.map((mode, index) => (
-          <ModeCard key={mode} label={mode} active={index === 0} />
-        ))}
-      </View>
-
-      <Text style={styles.sectionTitle}>Resultats en stock</Text>
-      {medicineList.map((medicine) => (
-        <View key={medicine.id} style={styles.card}>
-          <View style={styles.cardLeft}>
-            <View style={styles.medIcon}>
-              <Text style={styles.medIconText}>+</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.cardTitle}>{medicine.name}</Text>
-              <Text style={styles.cardMeta}>{medicine.form}</Text>
-              <Text style={styles.cardMeta}>{medicine.alternative}</Text>
-            </View>
-          </View>
-          <View style={styles.cardRight}>
-            <Text style={styles.price}>{medicine.price}</Text>
-            <View style={[styles.stockBadge, medicine.stock === "En stock" ? styles.stockGood : styles.stockLow]}>
-              <Text style={[styles.stockText, medicine.stock === "En stock" ? styles.stockTextGood : styles.stockTextLow]}>
-                {medicine.stock}
-              </Text>
-            </View>
-          </View>
-        </View>
-      ))}
-
-      <Text style={styles.sectionTitle}>Pharmacies de confiance</Text>
-      <View style={styles.pharmacyBox}>
-        {pharmacyList.map((pharmacy) => (
-          <View key={pharmacy.id} style={styles.pharmacyRow}>
-            <View style={styles.pin} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
-              <Text style={styles.pharmacyMeta}>
-                {pharmacy.rating} note - {pharmacy.distance}
-              </Text>
-            </View>
-            <Text style={styles.label}>{pharmacy.label}</Text>
-          </View>
-        ))}
-      </View>
-
-      <Pressable style={styles.cta} onPress={() => onNavigate("appointments")}>
-        <Text style={styles.ctaText}>Commander depuis une ordonnance</Text>
-      </Pressable>
-    </ScrollView>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 120,
-  },
-  kicker: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 12,
-    letterSpacing: 1.2,
-    textTransform: "uppercase",
-  },
-  title: {
-    color: colors.text,
-    fontSize: 24,
-    lineHeight: 31,
-    fontWeight: "800",
-    marginTop: 8,
-  },
-  hero: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#FFF4E8",
-    borderRadius: 28,
-    padding: 18,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "#FFE1C4",
-  },
-  heroText: {
-    flex: 1,
-    paddingRight: 12,
-  },
-  heroHeadline: {
-    color: colors.text,
-    fontSize: 18,
-    lineHeight: 25,
-    fontWeight: "800",
-  },
-  heroCopy: {
-    color: colors.muted,
-    marginTop: 8,
-    fontSize: 13,
-    lineHeight: 20,
-  },
-  heroImage: {
-    width: 92,
-    height: 92,
-    borderRadius: 24,
-  },
-  searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: colors.line,
-    marginTop: 16,
-  },
-  searchIcon: {
-    color: colors.muted,
-    fontSize: 18,
-    marginRight: 10,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 14,
-  },
-  modeGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-    marginTop: 14,
-  },
-  modeCard: {
-    width: "48%",
-    minHeight: 70,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-  modeCardActive: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primarySoft,
-  },
-  modeLabel: {
-    textAlign: "center",
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "700",
-    lineHeight: 18,
-  },
-  modeLabelActive: {
-    color: colors.primary,
-  },
-  sectionTitle: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: "800",
-    marginTop: 18,
-    marginBottom: 12,
-  },
-  card: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.line,
-    borderRadius: 24,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-    paddingRight: 10,
-    gap: 12,
-  },
-  medIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 18,
-    backgroundColor: colors.primarySoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  medIconText: {
-    color: colors.primary,
-    fontSize: 20,
-    fontWeight: "800",
-  },
-  cardTitle: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-  cardMeta: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 3,
-  },
-  cardRight: {
-    alignItems: "flex-end",
-  },
-  price: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: "800",
-    marginBottom: 8,
-  },
-  stockBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  stockGood: {
-    backgroundColor: "#EAF9F0",
-  },
-  stockLow: {
-    backgroundColor: "#FFF2E3",
-  },
-  stockText: {
-    fontSize: 11,
-    fontWeight: "700",
-  },
-  stockTextGood: {
-    color: colors.success,
-  },
-  stockTextLow: {
-    color: colors.warning,
-  },
-  pharmacyBox: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.line,
-    padding: 14,
-  },
-  pharmacyRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.line,
-  },
-  pin: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.danger,
-  },
-  pharmacyName: {
-    color: colors.text,
-    fontWeight: "800",
-  },
-  pharmacyMeta: {
-    color: colors.muted,
-    fontSize: 12,
-    marginTop: 3,
-  },
-  label: {
-    color: colors.primary,
-    fontWeight: "800",
-    fontSize: 11,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: colors.primarySoft,
-  },
-  cta: {
-    marginTop: 18,
-    backgroundColor: colors.primary,
-    borderRadius: 18,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  ctaText: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-  },
+  container: { paddingHorizontal: 20, paddingTop: 52, paddingBottom: 20 },
+  blob: { position: "absolute", borderRadius: 150 },
+
+  kicker: { color: colors.primary, fontWeight: "800", fontSize: 12, letterSpacing: 1.5, marginBottom: 6 },
+  title: { fontSize: 22, fontWeight: "800", color: colors.text, lineHeight: 30, marginBottom: 16 },
+
+  banner: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFF", borderRadius: 20, padding: 18, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", marginBottom: 20, ...shadows.soft },
+  bannerTitle: { fontSize: 16, fontWeight: "800", color: colors.text, lineHeight: 22 },
+  bannerSub: { fontSize: 12, color: colors.muted, marginTop: 6, lineHeight: 18 },
+  bannerImg: { width: 72, height: 72, borderRadius: 18, marginLeft: 12 },
+
+  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 18, paddingHorizontal: 16, paddingVertical: 10, borderWidth: 1, borderColor: "rgba(52, 120, 246, 0.15)", marginBottom: 12, ...shadows.card },
+  searchInput: { flex: 1, fontSize: 14, color: colors.text, marginLeft: 10 },
+  searchBtn: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center" },
+
+  aiBtn: { flexDirection: "row", backgroundColor: "#8A5CFF", borderRadius: 18, paddingVertical: 14, alignItems: "center", justifyContent: "center", marginBottom: 20, ...shadows.card },
+  aiBtnText: { color: "#FFF", fontWeight: "700", fontSize: 15 },
+  aiCard: { backgroundColor: "#FFF", borderRadius: 20, padding: 18, borderWidth: 1, borderColor: "#DDD6FE", marginBottom: 20, ...shadows.soft },
+  aiCardHeader: { flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  aiCardTitle: { fontSize: 15, fontWeight: "800", color: "#5B21B6", marginLeft: 8 },
+  aiCardText: { fontSize: 14, color: colors.text, lineHeight: 22 },
+  aiDismiss: { alignSelf: "flex-end", marginTop: 10 },
+  aiDismissText: { color: "#7C3AED", fontWeight: "700", fontSize: 13 },
+
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: colors.text, marginTop: 8, marginBottom: 12 },
+  emptyCard: { backgroundColor: "#FFF", borderRadius: 20, padding: 32, alignItems: "center", justifyContent: "center", marginBottom: 12, ...shadows.soft },
+  emptyText: { color: colors.muted, fontSize: 14, textAlign: "center", marginTop: 12 },
+
+  medCard: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#FFFFFF", borderRadius: 20, borderWidth: 1, borderColor: "rgba(0,0,0,0.03)", padding: 16, marginBottom: 10, ...shadows.soft },
+  medLeft: { flexDirection: "row", alignItems: "center", flex: 1, gap: 14 },
+  medIconWrap: { width: 48, height: 48, borderRadius: 16, backgroundColor: colors.primarySoft, alignItems: "center", justifyContent: "center" },
+  medName: { fontSize: 16, fontWeight: "700", color: colors.text },
+  medForm: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  medRight: { alignItems: "flex-end" },
+  medPrice: { fontSize: 15, fontWeight: "800", color: colors.primary, marginBottom: 6 },
+  stockBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+  stockText: { fontSize: 11, fontWeight: "700" },
+
+  ctaBtn: { flexDirection: "row", backgroundColor: colors.primary, borderRadius: 20, paddingVertical: 18, alignItems: "center", justifyContent: "center", marginTop: 10, ...shadows.card },
+  ctaBtnText: { color: "#FFF", fontWeight: "800", fontSize: 16 },
 });

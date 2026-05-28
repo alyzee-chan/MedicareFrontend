@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Image, ImageBackground, SafeAreaView, StatusBar, StyleSheet, Text, View } from "react-native";
+import {
+  Alert,
+  Image,
+  ImageBackground,
+  SafeAreaView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from "react-native";
 
 import { BottomTabs } from "./src/components/BottomTabs";
 import { AppointmentsScreen } from "./src/screens/AppointmentsScreen";
@@ -7,140 +15,155 @@ import { HomeScreen } from "./src/screens/HomeScreen";
 import { MedicinesScreen } from "./src/screens/MedicinesScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SosScreen } from "./src/screens/SosScreen";
-import { api } from "./src/services/api";
-import { colors } from "./src/theme";
+import { api } from "./src/services/api.js";
+import { colors, shadows } from "./src/theme";
 
 const tabs = [
-  { key: "home", label: "Accueil", symbol: "HOME" },
-  { key: "appointments", label: "RDV", symbol: "RDV" },
-  { key: "medicines", label: "Medicaments", symbol: "MED" },
-  { key: "sos", label: "SOS", symbol: "SOS" },
-  { key: "profile", label: "Profil", symbol: "PRO" },
+  { key: "home", label: "Accueil" },
+  { key: "appointments", label: "Ordonnances" },
+  { key: "medicines", label: "Notification" },
+  { key: "profile", label: "Profil" },
 ];
 
 export default function App() {
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [screenParams, setScreenParams] = useState({});
 
   useEffect(() => {
-    const timer = setTimeout(() => setReady(true), 1700);
+    // Shorter splash for better UX, will proceed once data is ready or after 1.5s max
+    const timer = setTimeout(() => setReady(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
+  // auto-ready when data is loaded
+  useEffect(() => {
+    if (!loading && dashboard) {
+      setReady(true);
+    }
+  }, [loading, dashboard]);
+
   useEffect(() => {
     let mounted = true;
+    setLoading(true);
     api
       .getDashboard()
       .then((payload) => {
-        if (mounted) {
-          setDashboard(payload);
-        }
+        if (mounted) { setDashboard(payload); setLoading(false); }
       })
-      .catch(() => {
-        if (mounted) {
-          setDashboard(null);
-        }
+      .catch((err) => {
+        console.log("API Error:", err.message);
+        if (mounted) { setDashboard(null); setLoading(false); }
       });
-
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
+  const handleNavigate = (tab, params = {}) => {
+    if (tab === "sos") {
+      Alert.alert("SOS Urgence", "Voulez-vous déclencher le mode SOS ?", [
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Confirmer SOS",
+          style: "destructive",
+          onPress: () => {
+            api.sendSos({ type: "urgence", latitude: 3.866, longitude: 11.5167, description: "Alerte SOS" })
+              .then(() => Alert.alert("SOS envoyé", "Les pharmacies proches ont été notifiées."))
+              .catch(() => Alert.alert("Erreur", "Impossible d'envoyer le SOS."));
+          },
+        },
+      ]);
+    } else {
+      setScreenParams(params);
+      setActiveTab(tab);
+    }
+  };
+
+  // ─── Splash (LOGO CENTERED ON NEW BACKGROUND) ───
   if (!ready) {
     return (
-      <SafeAreaView style={styles.splashWrap}>
-        <StatusBar barStyle="dark-content" />
+      <View style={styles.splashRoot}>
+        <StatusBar hidden />
         <ImageBackground
           source={require("./assets/images/LoadingPage.png")}
-          style={styles.splashCard}
-          imageStyle={styles.splashImage}
+          style={styles.splashBg}
+          resizeMode="cover"
         >
-          <View style={styles.splashOverlay}>
-            <View style={styles.logoFrame}>
-              <Image source={require("./assets/images/logo.jpg")} style={styles.logo} />
+          <View style={styles.splashContent}>
+            <View style={styles.logoRing}>
+              <Image
+                source={require("./assets/images/logo.jpg")}
+                style={styles.splashLogo}
+              />
             </View>
-            <Text style={styles.brand}>MediCare +</Text>
-            <Text style={styles.splashText}>Votre super-app sante, consultation, pharmacie et SOS.</Text>
           </View>
         </ImageBackground>
-      </SafeAreaView>
+      </View>
     );
   }
 
+  // ─── App ───
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.screen}>
-        {activeTab === "home" && <HomeScreen dashboard={dashboard} onNavigate={setActiveTab} />}
-        {activeTab === "appointments" && <AppointmentsScreen dashboard={dashboard} onNavigate={setActiveTab} />}
-        {activeTab === "medicines" && <MedicinesScreen dashboard={dashboard} onNavigate={setActiveTab} />}
-        {activeTab === "sos" && <SosScreen onNavigate={setActiveTab} />}
-        {activeTab === "profile" && <ProfileScreen dashboard={dashboard} onNavigate={setActiveTab} />}
-      </View>
-      <BottomTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
-    </SafeAreaView>
+    <View style={styles.appRoot}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.screen}>
+          {activeTab === "home" && (
+            <HomeScreen
+              dashboard={dashboard}
+              loading={loading}
+              onNavigate={handleNavigate}
+            />
+          )}
+          {activeTab === "appointments" && (
+            <AppointmentsScreen
+              dashboard={dashboard}
+              loading={loading}
+              onNavigate={handleNavigate}
+            />
+          )}
+          {activeTab === "medicines" && (
+            <MedicinesScreen
+              dashboard={dashboard}
+              loading={loading}
+              onNavigate={handleNavigate}
+              params={screenParams}
+            />
+          )}
+          {activeTab === "profile" && (
+            <ProfileScreen
+              dashboard={dashboard}
+              loading={loading}
+              onNavigate={handleNavigate}
+            />
+          )}
+        </View>
+        <BottomTabs tabs={tabs} activeTab={activeTab} onChange={(tab) => handleNavigate(tab)} />
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.bg,
-  },
-  screen: {
-    flex: 1,
-  },
-  splashWrap: {
-    flex: 1,
-    backgroundColor: colors.warm,
-    padding: 12,
-  },
-  splashCard: {
-    flex: 1,
-    overflow: "hidden",
-    borderRadius: 28,
-    backgroundColor: "#EAF7FF",
-  },
-  splashImage: {
-    borderRadius: 28,
-  },
-  splashOverlay: {
-    flex: 1,
+  appRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
+  screen: { flex: 1 },
+
+  // Splash
+  splashRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  splashBg: { flex: 1 },
+  splashContent: { flex: 1, alignItems: "center", justifyContent: "center" },
+  logoRing: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: "rgba(255,255,255,0.7)",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
-    backgroundColor: "rgba(255,255,255,0.28)",
-  },
-  logoFrame: {
-    width: 138,
-    height: 138,
-    borderRadius: 69,
     borderWidth: 2,
-    borderColor: "#54D3A2",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.92)",
-    marginBottom: 18,
+    borderColor: "#21D07A", // Subtle green ring as in your image
+    ...shadows.soft,
   },
-  logo: {
-    width: 88,
-    height: 88,
-    borderRadius: 22,
-  },
-  brand: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: colors.primary,
-    letterSpacing: 0.8,
-  },
-  splashText: {
-    marginTop: 8,
-    textAlign: "center",
-    fontSize: 15,
-    lineHeight: 22,
-    color: colors.muted,
-    maxWidth: 280,
-  },
+  splashLogo: { width: 110, height: 110, borderRadius: 55, resizeMode: "contain" },
 });

@@ -1,25 +1,35 @@
 import React from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "../theme";
 
-import { colors, metrics } from "../theme";
+const ICON_MAP = {
+  home: { active: "home", inactive: "home-outline" },
+  appointments: { active: "document-text", inactive: "document-text-outline" },
+  medicines: { active: "notifications", inactive: "notifications-outline" },
+  profile: { active: "person", inactive: "person-outline" },
+};
 
 export function BottomTabs({ tabs, activeTab, onChange }) {
   return (
     <View style={styles.wrap}>
       {tabs.map((tab) => {
         const active = activeTab === tab.key;
+        const icons = ICON_MAP[tab.key] || { active: "ellipse", inactive: "ellipse-outline" };
         return (
           <Pressable
             key={tab.key}
             onPress={() => onChange(tab.key)}
-            style={[styles.tab, active && styles.tabActive, tab.key === "sos" && styles.emergencyTab]}
+            style={({ pressed }) => [styles.tab, pressed && styles.tabPressed]}
           >
-            <View style={[styles.symbolBubble, active && styles.symbolBubbleActive, tab.key === "sos" && styles.emergencyBubble]}>
-              <Text style={[styles.symbol, active && styles.symbolActive]}>{tab.symbol}</Text>
+            <View style={[styles.iconWrap, active && styles.iconWrapActive]}>
+              <Ionicons
+                name={active ? icons.active : icons.inactive}
+                size={22}
+                color={active ? colors.primary : colors.muted}
+              />
             </View>
-            <Text style={[styles.label, active && styles.labelActive]} numberOfLines={1}>
-              {tab.label}
-            </Text>
+            <Text style={[styles.label, active && styles.labelActive]}>{tab.label}</Text>
           </Pressable>
         );
       })}
@@ -30,64 +40,48 @@ export function BottomTabs({ tabs, activeTab, onChange }) {
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
+    justifyContent: "space-around",
+    alignItems: "center",
     paddingTop: 10,
-    paddingBottom: 12,
-    borderTopWidth: 1,
-    borderTopColor: colors.line,
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    elevation: 12,
+    paddingBottom: 30,
+    paddingHorizontal: 6,
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 0.5,
+    borderTopColor: "rgba(0,0,0,0.06)",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 16,
+    elevation: 8,
   },
   tab: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 64,
-    marginHorizontal: 3,
-    borderRadius: 18,
+    paddingVertical: 2,
+    minWidth: 64,
   },
-  tabActive: {
+  tabPressed: {
+    opacity: 0.7,
+  },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
+  iconWrapActive: {
     backgroundColor: colors.primarySoft,
-  },
-  emergencyTab: {
-    backgroundColor: "#FFE6E8",
-  },
-  symbolBubble: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#F2F5FB",
-    marginBottom: 4,
-  },
-  symbolBubbleActive: {
-    backgroundColor: colors.primary,
-  },
-  emergencyBubble: {
-    backgroundColor: colors.danger,
-  },
-  symbol: {
-    color: colors.muted,
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  symbolActive: {
-    color: "#FFFFFF",
   },
   label: {
     fontSize: 11,
+    fontWeight: "500",
     color: colors.muted,
-    fontWeight: "600",
+    letterSpacing: 0.2,
   },
   labelActive: {
     color: colors.primary,
+    fontWeight: "700",
   },
 });
