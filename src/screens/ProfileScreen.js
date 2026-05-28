@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -41,9 +42,9 @@ export function ProfileScreen() {
                 source={{ uri: "https://ui-avatars.com/api/?name=Alyzee+User&background=3478F6&color=fff&size=128" }}
                 style={styles.avatarImg}
               />
-              <View style={styles.editBadge}>
+              <Pressable style={styles.editBadge} onPress={() => Alert.alert("📸 Fonctionnalité à venir", "La modification de la photo de profil n'est pas encore implémentée.")}>
                 <Ionicons name="camera" size={12} color="#FFF" />
-              </View>
+              </Pressable>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={styles.userName}>Alyzee User</Text>
@@ -58,7 +59,9 @@ export function ProfileScreen() {
         {/* Family Section */}
         <View style={styles.sectionRow}>
           <Text style={styles.sectionTitle}>Ma Famille</Text>
-          <Text style={styles.sectionLink}>Ajouter</Text>
+          <Pressable onPress={() => Alert.alert("👨‍👩‍👧 Fonctionnalité à venir", "L'ajout de membres à la famille n'est pas encore implémenté.")}>
+            <Text style={styles.sectionLink}>Ajouter</Text>
+          </Pressable>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 10 }}>
           {["Maman", "Papa", "Soeur"].map((role, i) => (
@@ -74,7 +77,7 @@ export function ProfileScreen() {
         {/* Menu Items */}
         <View style={styles.menuBox}>
           {profileItems.map((item, i) => (
-            <Pressable key={item.id} style={[styles.menuItem, i === profileItems.length - 1 && { borderBottomWidth: 0 }]}>
+            <Pressable key={item.id} style={[styles.menuItem, i === profileItems.length - 1 && { borderBottomWidth: 0 }]} onPress={() => Alert.alert(`🔧 ${item.title}`, "Cette fonctionnalité n'est pas encore implémentée.")}>
               <View style={[styles.menuIcon, { backgroundColor: `${item.color}15` }]}>
                 <Ionicons name={item.icon} size={20} color={item.color} />
               </View>
@@ -90,7 +93,7 @@ export function ProfileScreen() {
             <Text style={styles.premiumTitle}>Passez à l'offre Family</Text>
             <Text style={styles.premiumSub}>Accès illimité pour 5 profils</Text>
           </View>
-          <Pressable style={styles.premiumBtn}>
+          <Pressable style={styles.premiumBtn} onPress={() => Alert.alert("💎 Offre Family", "L'offre Family n'est pas encore implémentée.")}>
             <Text style={styles.premiumBtnText}>Découvrir</Text>
           </Pressable>
         </View>

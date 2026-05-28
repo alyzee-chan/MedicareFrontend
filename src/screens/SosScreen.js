@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
@@ -75,7 +76,7 @@ export function SosScreen({ onNavigate }) {
                 </View>
               </View>
             </View>
-            <Pressable style={styles.navBtn}>
+            <Pressable style={styles.navBtn} onPress={() => Alert.alert("🧭 Navigation GPS", `La navigation vers ${p.name} n'est pas encore implémentée.`)}>
               <Ionicons name="navigate" size={18} color="#FFF" />
             </Pressable>
           </View>

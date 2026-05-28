@@ -47,7 +47,7 @@ export function AppointmentsScreen({ dashboard, loading, onNavigate }) {
           </Pressable>
         </View>
 
-        <View style={styles.uploadCard}>
+        <Pressable style={styles.uploadCard} onPress={() => Alert.alert("📄 Ajout d'ordonnance", "L'import et le scan d'ordonnances ne sont pas encore implémentés.")}>
           <View style={styles.uploadIcon}>
             <Ionicons name="cloud-upload" size={28} color={colors.primary} />
           </View>
@@ -56,7 +56,7 @@ export function AppointmentsScreen({ dashboard, loading, onNavigate }) {
             <Text style={styles.uploadSub}>Scannez ou importez un PDF</Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.muted} />
-        </View>
+        </Pressable>
 
         <Text style={styles.sectionTitle}>Mes prochains rendez-vous</Text>
 
