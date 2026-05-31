@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Medicare+",
+    "slug": "medicare-plus",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/logo.jpg",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/LoadingPage.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/logo.jpg",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/logo.jpg"
+    }
+  }
+}
